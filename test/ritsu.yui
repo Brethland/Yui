@@ -1,4 +1,4 @@
-(import "./test/azusa")
+(import "./k-on/azusa")
 
 (scope "mio")
     type Vec (S: Any) { # Inline Test

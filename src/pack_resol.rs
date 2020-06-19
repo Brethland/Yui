@@ -3,6 +3,7 @@ use crate::parser::parse;
 
 use std::fs;
 use std::cmp::Ordering;
+use std::path::Path;
 use std::collections::VecDeque;
 
 #[derive(PartialEq, Eq)]
@@ -23,22 +24,30 @@ impl PartialOrd for Packages {
     }
 }
 
-fn read_file(s: String) -> Vec<Packages> {
+fn read_file(s: String, pre_path: &str) -> Vec<Packages> {
     let mut path = s.clone();
     path = path.trim_end_matches("\"").to_string();
     path = path.trim_start_matches("\"").to_string();
     let p = path.clone();
+    let tmp = pre_path.clone();
     path.push_str(".yui");
-    let unparsed_file = fs::read_to_string(path).expect("cannot read file: {}");
+    let unparsed_file = fs::read_to_string(String::from(pre_path) + "\\" + path.as_str()).expect("cannot read file: {}"); // To do : not on Windows?
     
     let asts = parse(unparsed_file);
 
-    let ret = package_import(&asts, p, 0, true);
+    let mut new_path = Path::new(&tmp).to_path_buf();
+    let pos = p.as_str().rfind("/");
+    match pos {
+        Some(c) => new_path.push(&p[..c]),
+        _       => {},
+    }
+
+    let ret = package_import(&asts, p, 0, true, new_path.to_str().unwrap());
 
     ret
 }
 
-pub fn package_import(asts: &Vec<Ast>, now_scope: String, depth: u64, total: bool) -> Vec<Packages> {
+pub fn package_import(asts: &Vec<Ast>, now_scope: String, depth: u64, total: bool, pre_path: &str) -> Vec<Packages> {
     let mut result = vec![];
 
     for (i, ast) in asts.iter().enumerate() {
@@ -55,14 +64,14 @@ pub fn package_import(asts: &Vec<Ast>, now_scope: String, depth: u64, total: boo
                         if *path == "main".to_string() {
                             panic!("Package cannot be named main");
                         }
-                        result.append(&mut read_file(path.clone()));
+                        result.append(&mut read_file(path.clone(), pre_path));
                     }
                 } else if vec[0] == Ast::Keyword(Keyword::Scope) {
                     if vec.len() != 2 {
                         panic!("Mismatch of scope argument number: {}", vec.len());
                     }
                     if let Ast::LitString(scope) = &vec[1] {
-                        package_import(&asts[i+1..].to_vec(), (*scope).clone(), depth + 1, false);
+                        package_import(&asts[i+1..].to_vec(), (*scope).clone(), depth + 1, false, pre_path);
                     }
                 } else if vec[0] == Ast::Keyword(Keyword::End) {
                     if vec.len() != 2 {

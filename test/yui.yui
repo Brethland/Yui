@@ -1,4 +1,4 @@
-(import "./test/ritsu")
+(import "ritsu")
 # K-ON!
 
 (scope "yui")
