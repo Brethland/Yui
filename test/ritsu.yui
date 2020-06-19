@@ -1,0 +1,12 @@
+(import "./test/azusa")
+
+(scope "mio")
+    type Vec (S: Any) { # Inline Test
+            (nil)
+            (cons S Vec)
+    }
+
+    type Prod (S: Any P: Any) {
+            (prod S P)
+    }
+(end "mio")

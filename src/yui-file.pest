@@ -1,0 +1,21 @@
+integer = { ("0b" | "0x" | "0B" | "0X")? ~ ASCII_DIGIT+ }
+string = { "\"" ~ ( "\"\"" | (!"\"" ~ ANY) )* ~ "\"" }
+
+keywords = { "let" | "match" | "default" | "import" | "scope" | "end" | "open" | "generic" }
+operator = { "+" | "-" | "*" | "/" | "^" | ">" | "<" | "=" | "<=" | ">=" | "&" | "|" | "!" | "!=" }
+symbol = { !(keywords | operator) ~ (ASCII_ALPHA | "_") ~ (ASCII_ALPHA | "_" | ASCII_DIGIT)* }
+
+white_space = { " " | "\t" | "\r" | "\n" }
+empty = { " " }
+comment = { "#" ~ (!("\r" | "\n") ~ ANY)* ~ ("\r" | "\n")? }
+skipped = { white_space | comment }
+
+t_expr = { symbol | "<" ~ (symbol ~ empty+)* ~ symbol? ~ ">" }
+var = { symbol ~ (empty* ~ ":" ~ empty+ ~ t_expr ~ ("@" ~ t_expr)?)? }
+name = { keywords | var | operator }
+lit = { integer | string }
+
+expr = { "(" ~ skipped* ~ ((name | lit | expr)* ~ skipped+)* ~ (name | lit | expr) ~ ")" }
+
+type_c = { "type" ~ empty+ ~ symbol ~ empty* ~ expr ~ empty* ~ "{" ~ (skipped | expr)* ~ "}" }
+file = { SOI ~ (type_c | skipped | expr)* ~ EOI }
