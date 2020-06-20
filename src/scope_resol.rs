@@ -86,7 +86,7 @@ fn parse_expr_ordinary(ast: &Ast) -> Expr {
     Expr{name: var_name, asts: ast.clone()}
 }
 
-pub fn scope_parser(asts: &Vec<Ast>, scopes: &mut HashMap<String, Scope>) {
+pub fn scope_parser(asts: &Vec<Ast>, scopes: &mut HashMap<String, Scope>, opens: &mut HashMap<String, Vec<String>>) {
     let mut stack = VecDeque::new();
     stack.push_front("");
     let mut now_scope = "";
@@ -122,6 +122,14 @@ pub fn scope_parser(asts: &Vec<Ast>, scopes: &mut HashMap<String, Scope>) {
                         let parsed_expr = parse_expr_ordinary(ast);
                         stat.context.insert(parsed_expr.name, parsed_expr.asts);
                     }
+                } else if vec[0] == Ast::Keyword(Keyword::Open) {
+                    if vec.len() != 2 {
+                        panic!("Mismatch of open argument number: {}", vec.len());
+                    }
+                    if let Ast::LitString(scope) = &vec[1] {
+                        let stat = opens.entry(now_scope.to_string()).or_insert(vec![]);
+                        stat.push(scope.to_string());
+                    }
                 }
             },
             Ast::Type(_) => {
@@ -137,6 +145,54 @@ pub fn scope_parser(asts: &Vec<Ast>, scopes: &mut HashMap<String, Scope>) {
                 }
             },
             _              => panic!("Unresolved Ast: {:?}", ast)
+        }
+    }
+}
+
+fn find_type(types: &Vec<TypeContext>, typ: &TypeContext) -> bool {
+    for ty in types {
+        if ty.typ == typ.typ {
+            return true;
+        }
+    }
+    false
+}
+
+pub fn open_scope(scopes: &mut HashMap<String, Scope>, opens: &HashMap<String, Vec<String>>) {
+    for (scope, vec) in opens {
+        let mut tmp_vec = vec![]; // Fuck you borrow checker
+        let mut types_vec = vec![]; // Fuck you twice borrow checker
+        for v in vec {
+            let stat_v = match scopes.get(v) {
+                Some(stat) => stat,
+                None       => panic!("Unknown scope: {}", scope)
+            };
+            if stat_v.parent != Some("".to_string()) {
+                panic!("Cannot open non root scope: {}", v);
+            }
+            tmp_vec.push(stat_v.context.clone());
+            types_vec.push(stat_v.t_scope.alive_type.clone());
+        }
+        let stat = match scopes.get_mut(scope) {
+            Some(stat) => stat,
+            None       => panic!("Unknown scope: {}", scope)
+        };
+        for tmp in tmp_vec {
+            for (name, ast) in tmp {
+                match stat.context.get(&name) {
+                    Some(_) => {},
+                    None    => {
+                        stat.context.insert(name, ast);
+                    }
+                }
+            }
+        }
+        for tmp in types_vec {
+            for tc in tmp {
+                if !find_type(&stat.t_scope.alive_type, &tc) {
+                    stat.t_scope.alive_type.push(tc);
+                }
+            }
         }
     }
 }

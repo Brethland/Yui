@@ -14,7 +14,7 @@ use std::collections::HashMap;
 use parser::parse;
 use pack_resol::*;
 use ytype::*;
-use scope_resol::scope_parser;
+use scope_resol::*;
 
 fn main() -> std::io::Result<()> {
     let mut path = env::current_dir()?;
@@ -46,12 +46,16 @@ fn main() -> std::io::Result<()> {
         context: HashMap::new(),
     });
 
+    let mut needed_scopes: HashMap<String, Vec<String>> = HashMap::new();
+
     for ast in imported_asts {
         scope_validation(&ast.content);
         if ast.name != "main".to_string() {
-            scope_parser(&ast.content, &mut scopes);
+            scope_parser(&ast.content, &mut scopes, &mut needed_scopes);
         }
     }
+
+    open_scope(&mut scopes, &mut needed_scopes);
 
     Ok(())
 }

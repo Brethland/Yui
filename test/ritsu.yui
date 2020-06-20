@@ -10,6 +10,9 @@
         (prod S P)
     }
 
+    (generic do-twice (x: Any fun: <Arrow Any Any>)
+        (fun (fun x)))
+
 (end "mio")
 
 (scope "yui")
