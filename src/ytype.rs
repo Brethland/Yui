@@ -1,8 +1,7 @@
 use std::collections::HashMap;
-use lazy_static::lazy_static;
 use crate::ast::Ast;
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq, Clone, Hash)]
 pub enum BaseType {
     Int,
     Str,
@@ -10,7 +9,7 @@ pub enum BaseType {
     Unit,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq, Clone, Hash)]
 pub enum Type {
     BaseType(BaseType),
     CustomType(String),
@@ -20,38 +19,39 @@ pub enum Type {
     },
 }
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq, Clone, Hash)]
 pub struct Constructor {
-    name: String,
-    args: Vec<Type>,
+    pub name: String,
+    pub args: Vec<Type>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq, Clone, Hash)]
 pub struct TypeContext {
-    typ: Type,
-    constructors: Vec<Constructor>,
+    pub typ: Type,
+    pub constructors: Vec<Constructor>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub struct TypeScope {
-    alive_type: Vec<TypeContext>,
-    gamma: HashMap<String, Type>,
+    pub alive_type: Vec<TypeContext>,
+    pub gamma: HashMap<String, Type>,
 }
 
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub struct Scope {
-    t_scope: TypeScope,
-    context: HashMap<String, Ast>,
+    pub name: String,
+    pub parent: Option<String>,
+    pub children: Vec<String>,
+    pub t_scope: TypeScope,
+    pub context: HashMap<String, Ast>,
 }
 
-lazy_static! {
-    static ref GL_SCOPE: Scope = Scope {
-        t_scope: TypeScope {
-            alive_type: vec![TypeContext{typ: Type::BaseType(BaseType::Any), constructors: vec![]},
-                             TypeContext{typ: Type::BaseType(BaseType::Int), constructors: vec![]},
-                             TypeContext{typ: Type::BaseType(BaseType::Str), constructors: vec![]},
-                             TypeContext{typ: Type::BaseType(BaseType::Unit), constructors: vec![]}],
-            gamma: HashMap::new(),
-        },
-        context: HashMap::new(),
-    };
+impl Scope {
+    pub fn new() -> Scope {
+        Scope{name: "".to_string(), 
+            parent: Option::None,
+            children: vec![], 
+            t_scope: TypeScope{alive_type: vec![], gamma: HashMap::new()}, 
+            context: HashMap::new()}
+    }
 }
