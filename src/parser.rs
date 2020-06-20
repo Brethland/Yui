@@ -133,8 +133,11 @@ fn parse_type(pair: pest::iterators::Pair<Rule>) -> Ast {
     Ast::Type(type_vec)
 }
 
-pub fn parse(s: String) -> Vec<Ast>{
-    let pairs = YuiFile::parse(Rule::file, &s).expect("boom!").next().unwrap().into_inner().filter(|token| token.as_rule() != Rule::skipped).collect::<Vec<Pair<Rule>>>();
+pub fn parse(s: String) -> Result<Vec<Ast>, pest::error::Error<Rule>>{
+    let mut parsed_file = YuiFile::parse(Rule::file, &s)?;
+    let pairs = parsed_file.next().unwrap().into_inner().
+                filter(|token| token.as_rule() != Rule::skipped).
+                collect::<Vec<Pair<Rule>>>();
 
     let mut result = vec![];
 
@@ -146,5 +149,5 @@ pub fn parse(s: String) -> Vec<Ast>{
         }
     }
 
-    result
+    Ok(result)
 }

@@ -15,12 +15,17 @@ use pack_resol::*;
 
 fn main() -> std::io::Result<()> {
     let mut path = env::current_dir()?;
+
     path.push("test");
-
+    path.push("yui.yui");
     let pre_path = String::from(path.as_path().to_str().unwrap());
+    path.pop();
 
-    let unparsed_file = fs::read_to_string(pre_path + "\\yui.yui")?; // To do : not on Windows?
-    let asts = parse(unparsed_file);
+    let unparsed_file = fs::read_to_string(pre_path)?;
+    let asts = match parse(unparsed_file) {
+        Ok(asts) => asts,
+        _        => panic!("Cannot parse file correctly")
+    };
 
     let imported_asts = package_import(&asts, "main".to_string(), 0, true, path.as_path().to_str().unwrap());
 

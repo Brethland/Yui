@@ -3,7 +3,7 @@ use crate::parser::parse;
 
 use std::fs;
 use std::cmp::Ordering;
-use std::path::Path;
+use std::path::PathBuf;
 use std::collections::VecDeque;
 
 #[derive(PartialEq, Eq)]
@@ -26,25 +26,29 @@ impl PartialOrd for Packages {
 
 fn read_file(s: String, pre_path: &str) -> Vec<Packages> {
     let mut path = s.clone();
+
     path = path.trim_end_matches("\"").to_string();
     path = path.trim_start_matches("\"").to_string();
     let p = path.clone();
-    let tmp = pre_path.clone();
     path.push_str(".yui");
-    let unparsed_file = fs::read_to_string(String::from(pre_path) + "\\" + path.as_str()).expect("cannot read file: {}"); // To do : not on Windows?
     
-    let asts = parse(unparsed_file);
+    let mut package_path = PathBuf::from(pre_path.to_string());
+    package_path.push(path);
+    let unparsed_file = fs::read_to_string(package_path.as_path().to_str().unwrap()).expect("cannot read file: {}");
+    package_path.pop();
+    
+    let asts = match parse(unparsed_file) {
+        Ok(asts) => asts,
+        _        => panic!("Cannot parse file correctly")
+    };
 
-    let mut new_path = Path::new(&tmp).to_path_buf();
     let pos = p.as_str().rfind("/");
     match pos {
-        Some(c) => new_path.push(&p[..c]),
+        Some(c) => package_path.push(&p[..c]),
         _       => {},
     }
 
-    let ret = package_import(&asts, p, 0, true, new_path.to_str().unwrap());
-
-    ret
+    package_import(&asts, p, 0, true, package_path.to_str().unwrap())
 }
 
 pub fn package_import(asts: &Vec<Ast>, now_scope: String, depth: u64, total: bool, pre_path: &str) -> Vec<Packages> {
@@ -72,10 +76,6 @@ pub fn package_import(asts: &Vec<Ast>, now_scope: String, depth: u64, total: boo
                     }
                     if let Ast::LitString(scope) = &vec[1] {
                         package_import(&asts[i+1..].to_vec(), (*scope).clone(), depth + 1, false, pre_path);
-                    }
-                } else if vec[0] == Ast::Keyword(Keyword::End) {
-                    if vec.len() != 2 {
-                        panic!("Mismatch of end argument number: {}", vec.len());
                     }
                 }
             },
@@ -114,6 +114,9 @@ pub fn scope_validation(asts: &Vec<Ast>) {
                         stack.push_front(scope);
                     }
                 } else if vec[0] == Ast::Keyword(Keyword::End) {
+                    if vec.len() != 2 {
+                        panic!("Mismatch of end argument number: {}", vec.len());
+                    }
                     if let Ast::LitString(scope) = &vec[1] {
                         if stack[0] != scope {
                             panic!("Scope {} cannot close before subscope {}", scope, stack[0]);
