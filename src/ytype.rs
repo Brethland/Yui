@@ -13,6 +13,7 @@ pub enum BaseType {
 pub enum Type {
     BaseType(BaseType),
     CustomType(String),
+    TypeArgs(String),
     ArrowType {
         left:  Box<Type>,
         right: Box<Type>,
@@ -28,6 +29,7 @@ pub struct Constructor {
 #[derive(Debug, Eq, PartialEq, Clone, Hash)]
 pub struct TypeContext {
     pub typ: Type,
+    pub args: Vec<Type>,
     pub constructors: Vec<Constructor>,
 }
 

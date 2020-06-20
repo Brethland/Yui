@@ -1,12 +1,34 @@
 (import "./k-on/azusa")
 
 (scope "mio")
-    type Vec (S: Any) { # Inline Test
-            (nil)
-            (cons S Vec)
+    type Vec (S) { # Inline Test
+        (nil)
+        (cons S Vec)
     }
 
-    type Prod (S: Any P: Any) {
-            (prod S P)
+    type Prod (S P) {
+        (prod S P)
     }
+
 (end "mio")
+
+(scope "yui")
+    (open "mio")
+
+    (scope "mugi")
+
+    (end "mugi")
+
+    (let incr: Int (x: Int)
+        (+ x 1))
+
+    (generic map: Vec (xs: Vec fun: <Arrow Any Any>)
+        (match xs  # Inline Test
+            (nil nil)
+            ((cons x xs) (cons (fun x) (map xs fun)))))
+
+    (let prod: Prod@<Int String> (prod 1 "hello"))
+
+    (say "Hello, world!") # This will not be imported as not in main scope
+
+(end "yui")

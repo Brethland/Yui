@@ -1,0 +1,6 @@
+(import "ritsu")
+# K-ON!
+
+(open "mio")
+
+(say "Hello, world") # This can be imported as in main file

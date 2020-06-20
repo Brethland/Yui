@@ -1,1 +1,3 @@
 (say "hello, world!")
+
+# This will not be imported as it is not in a scope

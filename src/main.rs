@@ -20,7 +20,7 @@ fn main() -> std::io::Result<()> {
     let mut path = env::current_dir()?;
 
     path.push("test");
-    path.push("yui.yui");
+    path.push("main.yui");
     let pre_path = String::from(path.as_path().to_str().unwrap());
     path.pop();
 
@@ -37,10 +37,10 @@ fn main() -> std::io::Result<()> {
         parent: Option::None,
         children: vec![],
         t_scope: TypeScope {
-            alive_type: vec![TypeContext{typ: Type::BaseType(BaseType::Any), constructors: vec![]},
-                             TypeContext{typ: Type::BaseType(BaseType::Int), constructors: vec![]},
-                             TypeContext{typ: Type::BaseType(BaseType::Str), constructors: vec![]},
-                             TypeContext{typ: Type::BaseType(BaseType::Unit), constructors: vec![]}],
+            alive_type: vec![TypeContext{typ: Type::BaseType(BaseType::Any), args: vec![], constructors: vec![]},
+                             TypeContext{typ: Type::BaseType(BaseType::Int), args: vec![], constructors: vec![]},
+                             TypeContext{typ: Type::BaseType(BaseType::Str), args: vec![], constructors: vec![]},
+                             TypeContext{typ: Type::BaseType(BaseType::Unit), args: vec![], constructors: vec![]}],
             gamma: HashMap::new(),
         },
         context: HashMap::new(),
@@ -48,7 +48,9 @@ fn main() -> std::io::Result<()> {
 
     for ast in imported_asts {
         scope_validation(&ast.content);
-        scope_parser(&ast.content, &mut scopes, ast.name);
+        if ast.name != "main".to_string() {
+            scope_parser(&ast.content, &mut scopes);
+        }
     }
 
     Ok(())
